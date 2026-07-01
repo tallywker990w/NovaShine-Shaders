@@ -1,1 +1,1 @@
-Shaders made my Claude
+Shaders made by Claude
