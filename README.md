@@ -1,8 +1,8 @@
 NovaShine Shaders (Iris / OptiFine-format shader pack)
 ========================================================
 Target: Minecraft Java Edition 1.21.1
-Loader: Iris (works on Fabric AND NeoForge 1.21.1+, and bundles Sodium
-        automatically — you do not need to install Sodium separately)
+Loader: Iris (works on Fabric AND NeoForge 1.21.1+, YOU do need to add
+              sodium for the shaders to act better)
 
 WHAT'S INSIDE
 -------------
