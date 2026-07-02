@@ -1,0 +1,31 @@
+## NovaShine Shaders - friendly labels for the Shaderpack Settings screen
+
+profile.comment=Potato - runs on almost anything, all extras off. Low - light extras, low-res shadows. Medium - balanced. High (default) - full extras, sharp shadows. Ultra - max quality, needs a strong GPU.
+
+profile.POTATO=Potato
+profile.POTATO.comment=Lowest cost: 512 shadow map, no god rays/bloom/puddles/wind sway/contact shadows. For weak/integrated GPUs.
+profile.LOW=Low
+profile.LOW.comment=1024 shadow map, cheap god rays and bloom, wind sway on, puddles/contact shadows off.
+profile.MEDIUM=Medium
+profile.MEDIUM.comment=2048 shadow map, all effects on at reduced quality. Good balance for most GPUs.
+profile.HIGH=High (Default)
+profile.HIGH.comment=2048 shadow map, all effects on at full quality. Recommended for dedicated GPUs.
+profile.ULTRA=Ultra
+profile.ULTRA.comment=4096 shadow map, longer shadow distance, max god ray/bloom quality. For strong GPUs.
+
+option.shadowMapResolution=Shadow Resolution
+option.shadowMapResolution.comment=Resolution of the shadow map texture. Higher = sharper shadows, more GPU cost.
+option.shadowDistance=Shadow Distance
+option.shadowDistance.comment=How far shadows render, in blocks.
+option.SHADOW_SAMPLES=Shadow Softness
+option.SHADOW_SAMPLES.comment=PCF filter kernel radius for shadow edges. Higher = softer shadows, more GPU cost.
+option.GOD_RAY_SAMPLES=God Ray Quality
+option.GOD_RAY_SAMPLES.comment=Sample count for the sun god ray effect. 0 disables god rays entirely.
+option.BLOOM_QUALITY=Bloom Quality
+option.BLOOM_QUALITY.comment=Bloom/glow kernel size. 0 disables bloom and emissive-block glow streaks entirely.
+option.WAVING_PLANTS=Wind Sway
+option.WAVING_PLANTS.comment=Wind-swaying grass, plants, and leaves.
+option.PUDDLES=Rain Puddles
+option.PUDDLES.comment=Wet puddle patches on exposed ground during rain.
+option.CONTACT_SHADOWS=Contact Shadows
+option.CONTACT_SHADOWS.comment=Screen-space ray-marched fine detail shadows, on top of the main shadow map.
