@@ -1,11 +1,14 @@
 NovaShine Shaders (Iris / OptiFine-format shader pack)
 ========================================================
 Target: Minecraft Java Edition 1.21.1
-Loader: Iris (works on Fabric AND NeoForge 1.21.1+, YOU do need to add
-              sodium for the shaders to act better)
+Loader: Iris (works on Fabric AND NeoForge 1.21.1+, YOU do need to add sodium
+              for the shaders to act better)
 
 WHAT'S INSIDE
 -------------
+- Five quality profiles: Potato, Low, Medium, High (default), Ultra -
+  switch anytime in Options > Video Settings > Shaderpack Settings, see
+  QUALITY PROFILES below for exactly what each one changes
 - Directional sun/moon lighting, built on top of Minecraft's own lightmap
   (sky + torch/block light) so daytime brightness matches vanilla, with
   a 5x5 PCF shadow map layered on top for soft-edged real shadows.
@@ -16,13 +19,102 @@ WHAT'S INSIDE
 - God rays (screen-space volumetric light scattering) from the sun, plus
   a radiant glow/streak effect for torches, lava, glowstone, and other
   emissive blocks
-- Round sun and moon
 - Restyled clouds: warm sunset/sunrise tint, darker/greyer in storms
 - Wind-swaying grass, ferns, flowers, and crops (plus subtle leaf sway)
 - Animated water: layered wave displacement, Fresnel-based reflection
   tint that shifts with sun/moon color, sun/moon specular highlight
 - Post-processing: bloom, saturation boost, vignette, Reinhard tonemap
 - Rain/storm response: dims and flattens lighting during weather
+
+CHANGELOG (v7)
+--------------
+- ADDED: five quality profiles - Potato, Low, Medium, High (default),
+  Ultra. Switch them in-game via Options > Video Settings > Shaderpack
+  Settings > Profile, or by editing "profile=HIGH" in shaders.properties.
+  See the QUALITY PROFILES section below for exactly what each tier
+  changes and why.
+
+QUALITY PROFILES
+-----------------
+Each profile sets these options together (all real Iris/OptiFine shader
+options, not fake toggles - you can also override any individual one by
+hand in the Shaderpack Settings screen after picking a profile):
+
+                    Potato   Low     Medium   High(default)  Ultra
+Shadow resolution    512     1024    2048     2048           4096
+Shadow distance       50      75      100      100            140
+Shadow softness        0       1        2        2              3
+God ray samples         0      16       24       40             64
+Bloom/glow quality      0       1        2        2              3
+Wind-swaying plants    off      on       on       on             on
+Rain puddles           off     off       on       on             on
+Contact shadows        off     off       on       on             on
+
+Notes:
+- Potato disables god rays, bloom/emissive glow, puddles, wind sway, and
+  contact shadows entirely (not just "0 samples" - the whole effect is
+  skipped via #if, so there's no leftover cost), and drops the shadow map
+  to 512 res / 50 block distance for the lowest possible GPU load while
+  keeping real directional lighting and basic shadows.
+- Shadow softness (SHADOW_SAMPLES) controls the PCF blur kernel radius
+  around each shadow sample (0 = single hard sample, 3 = 7x7 soft blur).
+  This has a smaller performance impact than shadow RESOLUTION, which is
+  the main cost driver.
+- The shadow bias/normal-offset math in gbuffers_terrain.fsh automatically
+  scales itself to whatever shadowMapResolution/shadowDistance are active,
+  so switching profiles won't reintroduce the shadow acne bug from
+  earlier versions at any resolution.
+
+CHANGELOG (v6)
+--------------
+- FIXED: lighting from light-emitting blocks (torches, lava, glowstone,
+  etc.) looked flat/underwhelming. Vanilla's lightmap already colors these
+  correctly, but up close they read dim compared to how warm/bright a real
+  torch or lava pool should feel. Added a proximity-based warm glow boost
+  in gbuffers_terrain.fsh (scales with the raw block-light coordinate, so
+  it's strongest right next to the light source and fades with distance),
+  and eased composite.fsh's bloom threshold slightly so these boosted
+  pixels actually bloom/glow instead of falling just under the cutoff.
+  This doesn't reintroduce the v5 sky-wash bug - that fix lives in the
+  god-ray proximity falloff, which is untouched here.
+
+CHANGELOG (v5)
+--------------
+- FIXED: washed-out/hazy lighting compared to vanilla (the bug shown in
+  the side-by-side screenshots). Root cause: the god-ray function marched
+  every sky pixel toward the sun and added light for every step that
+  stayed on open sky - since most of a clear sky IS open, this added a
+  near-uniform glow across the ENTIRE sky instead of concentrating near
+  the sun, flattening contrast and washing out colors. Fixed by adding a
+  screen-space distance falloff so the glow is actually concentrated near
+  the sun (like real god rays), and raised the bloom brightness threshold
+  so it stops picking up ordinary bright sky.
+- ADDED: shadows now interact with god rays - each pixel's real shadow-map
+  result now modulates its god-ray contribution, so standing in a tree's/
+  building's shadow doesn't give you an extra sunbeam glow on top of it.
+- ADDED: rain puddles - irregular wet patches (noise-shaped, not a flat
+  sheen) appear on upward-facing, sky-exposed terrain as rain picks up,
+  with a soft sky/sun reflection and specular highlight. Gated by the raw
+  skylight value so indoor floors under a roof stay dry.
+- ADDED: dedicated rain/snow particle shader (gbuffers_weather) - cooler
+  blue tint, a brightness/glint boost, and crisper drop edges instead of
+  vanilla's flat grey streaks.
+- ADDED: stylized procedural rain overlay + cooler rain color grading in
+  composite.fsh, faded in with rainStrength.
+- IMPROVED: god rays now fade out faster as rain picks up (tighter curve)
+  and fade back in once it clears, since rainStrength is continuously
+  interpolated by Iris - this was already partially working but is now
+  tuned to disappear more decisively during rain like you asked.
+- FIXED: leaf wind sway was gated the same way as grass (top-half only,
+  via mc_midTexCoord), which is wrong for leaves - they're full cube
+  blocks with no "planted base," so gating by texture height caused some
+  vertices of the same block to move while others didn't, warping the
+  cube. Leaves now sway as a whole block, all vertices together, with the
+  amplitude raised so it's actually visible (still smaller than grass -
+  see the note in gbuffers_terrain.vsh on why leaves can't sway as freely
+  without opening gaps between neighboring leaf blocks). The block list
+  already covered all 10 leaf variants in 1.21.1 - confirmed in
+  block.properties.
 
 CHANGELOG (v4)
 --------------
@@ -133,9 +225,12 @@ INSTALLATION
 
 TWEAKING
 --------
-- shadowMapResolution in shaders/shaders.properties controls shadow
-  sharpness vs. performance (2048 is a good middle ground; try 1024 if
-  FPS is low, 4096 if you have a strong GPU).
+- shadowMapResolution / shadowDistance are now profile-driven options (see
+  QUALITY PROFILES above) declared in shaders/shadow.vsh and
+  shaders/gbuffers_terrain.fsh - easiest to change via the in-game
+  Shaderpack Settings screen or by picking a different profile, but you
+  can also hand-edit the const declarations directly if you want a custom
+  value outside the five profiles.
 - Wave height/speed: edit the `wave` calculation in
   shaders/gbuffers_water.vsh.
 - Bloom strength: edit the `col += bloom * 0.6;` line in
